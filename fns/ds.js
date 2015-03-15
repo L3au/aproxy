@@ -1,8 +1,14 @@
-module.exports = (function(fs, Promise, FOLDERNAMES){
+module.exports = (function(fs, Promise){
+    var USER_FOLDERNAME;
+    if (process.platform === 'win32') {
+        USER_FOLDERNAME = process.env.USERPROFILE || process.env.APPDATA || process.env.TMP || process.env.TEMP;
+    } else {
+        USER_FOLDERNAME = process.env.HOME || process.env.TMPDIR || '/tmp';
+    }
+    USER_FOLDERNAME = USER_FOLDERNAME.replace(/\\/g, '/') + '/';
 
-    var USER_FOLDERNAME    = FOLDERNAMES.USER,
-        DATA_FOLDERNAME    = FOLDERNAMES.DATA,
-        PROJECT_FOLDERNAME = FOLDERNAMES.PROJECT;
+    var DATA_FOLDERNAME = '.aproxy/';
+    var PROJECT_FOLDERNAME = './';
 
     function formatpath(path){
         path = path.replace(/\\/g, '/');
@@ -149,4 +155,4 @@ module.exports = (function(fs, Promise, FOLDERNAMES){
             });
         }
     };
-}(require('fs'), require('promise'), require('./consts/foldernames')));
+}(require('fs'), require('promise')));

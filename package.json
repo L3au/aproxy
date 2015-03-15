@@ -1,6 +1,6 @@
 {
   "name": "aproxy",
-  "version": "1.0.15",
+  "version": "2.0.0",
   "description": "A proxy for static resources",
   "keywords": [
     "proxy",
@@ -10,12 +10,17 @@
   ],
   "main": "app.js",
   "bin": {
-    "aproxy": "bin/aproxy"
+    "aproxy": "proxy.js"
   },
   "dependencies": {
+    "anyproxy": "~3.2.3",
+    "colorful": "~2.1.0",
     "colors": "~1.0.3",
+    "commander": "~2.7.1",
     "express": "~4.10.1",
     "flex-combo-plus": "^2.1.7",
+    "ip": "~0.3.2",
+    "less": "~2.4.0",
     "merge": "~1.2.0",
     "promise": "~6.0.1"
   },
