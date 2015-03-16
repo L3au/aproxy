@@ -152,7 +152,7 @@ module.exports = {
         }
 
         req.localFiles = JSON.stringify(files);
-        log(color.green('forward to local files' + files.join(',')));
+        log(color.green('forward to local files: [' + files.join(',') + ']'));
 
         return true;
     },
