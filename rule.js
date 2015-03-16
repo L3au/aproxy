@@ -5,8 +5,7 @@ var ip = require('ip');
 var fs = require('fs');
 var URL = require('url');
 var path = require('path');
-var http = require('http');
-var https = require('https');
+var request = require('request');
 var less = require('less');
 var color = require('colorful');
 
@@ -18,7 +17,8 @@ function getType(file) {
     var ext = path.extname(file).slice(1);
     var mineTypes = {
         'js': 'text/javascript',
-        'css': 'text/css'
+        'css': 'text/css',
+        'less': 'text/css'
     };
 
     return mineTypes[ext];
@@ -123,6 +123,13 @@ module.exports = {
                 }
 
                 var fullPath = rule.path.replace(/\/$/, '') + '/' + path.path;
+                var lessPath = fullPath.replace(/\.css$/, '.less');
+
+                if (lessPath.slice(-5) == '.less' && fs.existsSync(lessPath)) {
+                    files[path.origPath] = lessPath;
+
+                    return true;
+                }
 
                 if (fs.existsSync(fullPath)) {
                     files[path.origPath] = fullPath;
@@ -145,11 +152,13 @@ module.exports = {
         }
 
         req.localFiles = JSON.stringify(files);
+        log(color.green('forward to local files' + files.join(',')));
 
         return true;
     },
 
     dealLocalResponse: function (req, reqBody, callback) {
+        var headers = req.headers;
         var files = JSON.parse(req.localFiles || '[]');
         var lastModified = '';
 
@@ -160,12 +169,61 @@ module.exports = {
         Promise.all(files.map(function (url) {
             return new Promise(function (res, rej) {
                 if (/^http/.test(url)) {
-                    var req = (/^https/.test(url) ? https : http).get(url);
+                    var pattern = URL.parse(url);
+                    var isHttps = /^https/.test(url);
 
-                    req.ignore = true;
-                    req.on('error', function () {
-                        rej();
+                    request(url, function (error, response, body) {
+                        if (!error && response.statusCode == 200) {
+                            res(body);
+                        } else {
+                            rej();
+                        }
                     });
+
+                    //var options = {
+                    //    host: pattern.host,
+                    //    path: pattern.path,
+                    //    port: isHttps ? '443' : '80',
+                    //    headers: headers
+                    //};
+                    //
+                    //var req = http.request(options, function (response) {
+                    //    var chunks = [];
+                    //    var size = 0;
+                    //
+                    //    response.on('data', function (chunk) {
+                    //        chunks.push(chunk);
+                    //        size += chunk.length;
+                    //    });
+                    //
+                    //    response.on('end', function () {
+                    //        var data = null;
+                    //        switch (chunks.length) {
+                    //            case 0:
+                    //                data = new Buffer(0);
+                    //                break;
+                    //            case 1:
+                    //                data = chunks[0];
+                    //                break;
+                    //            default:
+                    //                data = new Buffer(size);
+                    //                for (var i = 0, pos = 0, l = chunks.length; i < l; i++) {
+                    //                    var chunk = chunks[i];
+                    //                    chunk.copy(data, pos);
+                    //                    pos += chunk.length;
+                    //                }
+                    //                break;
+                    //        }
+                    //        res(data);
+                    //    });
+                    //
+                    //    response.on('error', function () {
+                    //        rej();
+                    //    });
+                    //});
+
+                    //req.ignore = true;
+                    //req.end();
                 } else {
                     fs.stat(url, function (err, stat) {
                         if (+stat.mtime > +lastModified) {
@@ -173,12 +231,11 @@ module.exports = {
                         }
                     });
 
-                    var lessPath = url.replace(/\.css$/, '.less');
-                    if (path.extname(lessPath) == '.less' && fs.existsSync(lessPath)) {
-                        var dirname = path.dirname(lessPath);
-                        var basename = path.basename(lessPath);
+                    if (url.slice(-5) == '.less') {
+                        var dirname = path.dirname(url);
+                        var basename = path.basename(url);
 
-                        fs.readFile(lessPath, function (err, buffer) {
+                        fs.readFile(url, function (err, buffer) {
                             if (err) {
                                 rej();
                                 return;
@@ -225,7 +282,10 @@ module.exports = {
                 'Content-Length': contents.length,
                 'Content-Type': contentType,
                 'Server': 'aproxy',
-                'Last-Modified': lastModified.toString()
+                'Last-Modified': lastModified.toString(),
+                'Pragma': 'no-cache',
+                'Expires': 0,
+                'Cache-Control': 'no-cache, no-store, must-revalidate'
             }, contents);
         }, function () {
             callback(404, {
@@ -251,9 +311,14 @@ module.exports = {
     //    return statusCode;
     //},
     //
-    //replaceResponseHeader: function (req, res, header) {
-    //    return header;
-    //},
+    replaceResponseHeader: function (req, res, header) {
+        header = header || {};
+        header["Cache-Control"] = "no-cache, no-store, must-revalidate";
+        header["Pragma"] = "no-cache";
+        header["Expires"] = 0;
+
+        return header;
+    },
     //
     //replaceServerResDataAsync: function (req, res, serverResData, callback) {
     //    callback(serverResData);

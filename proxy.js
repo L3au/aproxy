@@ -13,7 +13,7 @@ var packageInfo = require("./package.json");
 var localIp = 'http://' + (ip.address() || '127.0.0.1') + ':';
 
 // reset log
-//console.log = function () {};
+console.log = function () {};
 
 function log(msg) {
     process.stdout.write(msg);
