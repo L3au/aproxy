@@ -1,6 +1,6 @@
 {
   "name": "aproxy",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "A proxy for static resources",
   "keywords": [
     "proxy",
@@ -8,25 +8,21 @@
     "combo",
     "web"
   ],
-  "main": "app.js",
   "bin": {
     "aproxy": "proxy.js"
   },
   "dependencies": {
-    "anyproxy": "~3.2.3",
+    "anyproxy": "^3.2.3",
     "colorful": "~2.1.0",
     "commander": "~2.7.1",
     "express": "~4.10.1",
-    "ip": "~0.3.2",
     "less": "~2.4.0",
     "merge": "~1.2.0",
-    "promise": "~6.0.1",
-    "request": "^2.53.0"
+    "promise": "~6.0.1"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/licg9999/aproxy.git"
+    "url": "https://github.com/L3au/aproxy"
   },
   "author": "uno",
   "license": "MIT",
