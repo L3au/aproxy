@@ -17,9 +17,14 @@ aproxy [-c number] [-p number]
 
 ### 更新记录
 
+> - v2.1.0
+     - 修复combo bug、https bug
+     - 使用方式上以配置代理代替hosts绑定的
+     - 增加Aproxy Chrome扩展管理代理配置
+
 > - v2.0.0
      - 全新改版，底层基于[Anyproxy](https://github.com/alibaba/anyproxy)，只做中间件
-     - 去除定义域名，规则匹配只与用户配置规则有关
+     - 去除定义域名，规则匹配只与用户配置规则有关，所以不需要指定域名对应IP
      - 增加css对应less文件预处理
 
 > - v1.0.12
