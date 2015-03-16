@@ -10,22 +10,6 @@ var express = require('express');
 var proxy = require("anyproxy");
 var packageInfo = require("./package.json");
 
-var localIp = 'http://' + (ip.address() || '127.0.0.1') + ':';
-
-// reset log
-console.log = function () {};
-
-function log(msg) {
-    process.stdout.write(msg);
-}
-
-// generate rootCA file
-if (!proxy.isRootCAFileExists()) {
-    proxy.generateRootCA();
-
-    log(color.green('\n请双击rootCA.crt文件，安装并信任根证书，重启浏览器后重新启动aproxy。\n\n'))
-}
-
 // commander options
 program
     .version(packageInfo.version)
@@ -43,6 +27,22 @@ program.on('--help', function(){
 
 program.parse(process.argv);
 
+var localIp = 'http://' + (ip.address() || '127.0.0.1') + ':';
+
+// reset log
+console.log = function () {};
+
+function log(msg) {
+    process.stdout.write(msg);
+}
+
+// generate rootCA file
+if (!proxy.isRootCAFileExists()) {
+    proxy.generateRootCA();
+
+    log(color.green('\n请双击rootCA.crt文件，安装并信任根证书，重启浏览器后重新启动aproxy。\n\n'));
+    return;
+}
 
 var proxyPort = program.port || '9001';
 var configPort = program.config || '9999';

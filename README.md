@@ -7,6 +7,7 @@ npm install -g aproxy
 ### 使用
 
 ````bash
+aproxy -h 查看帮助
 aproxy [-c number] [-p number]
         -c: 配置端口, 默认9999
         -p: 代理端口, 默认80
@@ -20,7 +21,6 @@ aproxy [-c number] [-p number]
      - 全新改版，底层基于[Anyproxy](https://github.com/alibaba/anyproxy)，只做中间件
      - 去除定义域名，规则匹配只与用户配置规则有关
      - 增加css对应less文件预处理
-     - 原有规则配置页面保留，建议使用[Mew Proxy]()管理代理规则
 
 > - v1.0.12
      - 修复版本更新用户数据丢失的问题;

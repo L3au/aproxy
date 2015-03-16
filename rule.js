@@ -28,12 +28,9 @@ function getType(file) {
 function getRules() {
     var homePath = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
     var rulesPath = path.join(homePath, '.aproxy/data/rules.json');
-    var rules = [];
 
     if (fs.existsSync(rulesPath)) {
-        var buffer = fs.readFileSync(rulesPath);
-
-        rules = JSON.parse(buffer.toString());
+        var rules = require(rulesPath);
 
         rules = rules.filter(function (rule) {
             return !rule.disabled;
@@ -61,10 +58,6 @@ function getRules() {
 }
 
 module.exports = {
-    //summary: function () {
-    //    return '';
-    //},
-
     shouldUseLocalResponse: function (req, reqBody) {
         var rules = getRules();
 
@@ -159,7 +152,6 @@ module.exports = {
     },
 
     dealLocalResponse: function (req, reqBody, callback) {
-        var headers = req.headers;
         var files = JSON.parse(req.localFiles || '[]');
         var lastModified = '';
 
@@ -170,9 +162,6 @@ module.exports = {
         Promise.all(files.map(function (url) {
             return new Promise(function (res, rej) {
                 if (/^http/.test(url)) {
-                    var pattern = URL.parse(url);
-                    var isHttps = /^https/.test(url);
-
                     request(url, function (error, response, body) {
                         if (!error && response.statusCode == 200) {
                             res(body);
@@ -180,51 +169,6 @@ module.exports = {
                             rej();
                         }
                     });
-
-                    //var options = {
-                    //    host: pattern.host,
-                    //    path: pattern.path,
-                    //    port: isHttps ? '443' : '80',
-                    //    headers: headers
-                    //};
-                    //
-                    //var req = http.request(options, function (response) {
-                    //    var chunks = [];
-                    //    var size = 0;
-                    //
-                    //    response.on('data', function (chunk) {
-                    //        chunks.push(chunk);
-                    //        size += chunk.length;
-                    //    });
-                    //
-                    //    response.on('end', function () {
-                    //        var data = null;
-                    //        switch (chunks.length) {
-                    //            case 0:
-                    //                data = new Buffer(0);
-                    //                break;
-                    //            case 1:
-                    //                data = chunks[0];
-                    //                break;
-                    //            default:
-                    //                data = new Buffer(size);
-                    //                for (var i = 0, pos = 0, l = chunks.length; i < l; i++) {
-                    //                    var chunk = chunks[i];
-                    //                    chunk.copy(data, pos);
-                    //                    pos += chunk.length;
-                    //                }
-                    //                break;
-                    //        }
-                    //        res(data);
-                    //    });
-                    //
-                    //    response.on('error', function () {
-                    //        rej();
-                    //    });
-                    //});
-
-                    //req.ignore = true;
-                    //req.end();
                 } else {
                     fs.stat(url, function (err, stat) {
                         if (+stat.mtime > +lastModified) {
@@ -280,7 +224,6 @@ module.exports = {
             });
 
             callback(200, {
-                'Content-Length': contents.length,
                 'Content-Type': contentType,
                 'Server': 'aproxy',
                 'Last-Modified': lastModified.toString(),
