@@ -5,9 +5,10 @@ var ip = require('ip');
 var fs = require('fs');
 var URL = require('url');
 var path = require('path');
-var request = require('request');
 var less = require('less');
+var Promise = require('promise');
 var color = require('colorful');
+var request = require('request');
 
 function log(msg) {
     process.stdout.write(msg + '\n');
