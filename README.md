@@ -10,7 +10,7 @@ npm install -g aproxy
 aproxy -h 查看帮助
 aproxy [-c number] [-p number]
         -c: 配置端口, 默认9999
-        -p: 代理端口, 默认80
+        -p: 代理端口, 默认9998
 ````
 
 启动后在 http://127.0.0.1:9999 进行配置

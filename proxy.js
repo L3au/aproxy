@@ -11,14 +11,14 @@ var spawn = require('child_process').spawn;
 program
     .version(packageInfo.version)
     .description('A proxy for static resources')
-    .option('-p, --port [value]', 'proxy port, 9527 for default')
-    .option('-c, --config [value]', 'config page port, 9528 for default');
+    .option('-p, --port [value]', 'proxy port, 9998 for default')
+    .option('-c, --config [value]', 'config page port, 9999 for default');
 
 program.on('--help', function () {
     console.log('  Examples:');
     console.log('');
-    console.log('    $ aproxy -p 9527');
-    console.log('    $ aproxy -p 80 -c 9528');
+    console.log('    $ aproxy -p 9998');
+    console.log('    $ aproxy -p 80 -c 9999');
     console.log('');
 });
 
@@ -44,8 +44,8 @@ if (program.port || program.config) {
     log(color.red('注意：修改默认端口后，Aproxy Chrome扩展无法工作。。\n'));
 }
 
-var proxyPort = program.port || '9527';
-var configPort = program.config || '9528';
+var proxyPort = program.port || '9998';
+var configPort = program.config || '9999';
 
 // start proxy server
 var options = {
