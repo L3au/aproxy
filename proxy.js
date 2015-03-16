@@ -1,36 +1,32 @@
 #!/usr/bin/env node
 
-var ip = require('ip');
 var program = require('commander');
 var color = require('colorful');
-var fs = require("fs");
-var path = require("path");
-var http = require('http');
 var express = require('express');
 var proxy = require("anyproxy");
 var packageInfo = require("./package.json");
+var spawn = require('child_process').spawn;
 
 // commander options
 program
     .version(packageInfo.version)
     .description('A proxy for static resources')
-    .option('-p, --port [value]', 'proxy port, 9001 for default')
-    .option('-c, --config [value]', 'config page port, 9999 for default');
+    .option('-p, --port [value]', 'proxy port, 9527 for default')
+    .option('-c, --config [value]', 'config page port, 9528 for default');
 
-program.on('--help', function(){
+program.on('--help', function () {
     console.log('  Examples:');
     console.log('');
-    console.log('    $ aproxy -p 9001');
-    console.log('    $ aproxy -p 80 -c 9999');
+    console.log('    $ aproxy -p 9527');
+    console.log('    $ aproxy -p 80 -c 9528');
     console.log('');
 });
 
 program.parse(process.argv);
 
-var localIp = 'http://' + (ip.address() || '127.0.0.1') + ':';
-
 // reset log
-console.log = function () {};
+console.log = function () {
+};
 
 function log(msg) {
     process.stdout.write(msg);
@@ -44,8 +40,23 @@ if (!proxy.isRootCAFileExists()) {
     return;
 }
 
-var proxyPort = program.port || '9001';
-var configPort = program.config || '9999';
+if (program.port || program.config) {
+    log(color.red('注意：修改默认端口后，Aproxy Chrome扩展无法工作。。\n'));
+}
+
+var proxyPort = program.port || '9527';
+var configPort = program.config || '9528';
+
+// start proxy server
+var options = {
+    type: 'http',
+    port: proxyPort,
+    disableWebInterface: true
+};
+
+new proxy.proxyServer(options);
+
+log(color.green('proxy start: 127.0.0.1:' + proxyPort + '\n'));
 
 // deprecated config page
 var server = express();
@@ -59,16 +70,4 @@ server.use(function (req, res, next) {
 });
 server.listen(configPort);
 
-log(color.green('config page: ' + localIp  + configPort + '\n'));
-
-
-// start proxy server
-var options = {
-    type: 'http',
-    port: proxyPort,
-    disableWebInterface: true
-};
-
-new proxy.proxyServer(options);
-
-log(color.green('proxy start: ' + localIp + proxyPort + '\n'));
+log(color.green('config page: 127.0.0.1:' + configPort + '\n'));

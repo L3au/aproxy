@@ -1,65 +1,19 @@
 /**
  * Created by Leshu on 3/15/12.
  */
-var ip = require('ip');
 var fs = require('fs');
 var URL = require('url');
 var path = require('path');
+var http = require('http');
+var https = require('https');
 var less = require('less');
 var Promise = require('promise');
 var color = require('colorful');
-var request = require('request');
-
-function log(msg) {
-    process.stdout.write(msg + '\n');
-}
-
-function getType(file) {
-    var ext = path.extname(file).slice(1);
-    var mineTypes = {
-        'js': 'text/javascript',
-        'css': 'text/css',
-        'less': 'text/css'
-    };
-
-    return mineTypes[ext];
-}
-
-function getRules() {
-    var homePath = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-    var rulesPath = path.join(homePath, '.aproxy/data/rules.json');
-
-    if (fs.existsSync(rulesPath)) {
-        var rules = require(rulesPath);
-
-        rules = rules.filter(function (rule) {
-            return !rule.disabled;
-        });
-
-        rules = rules.map(function (rule) {
-            var from = rule.from;
-            var to = rule.to;
-
-            var match = from.match(/([\w-]+)/g);
-
-            if (match && match.length >= 2) {
-                return {
-                    group: match[0],
-                    project: match[1],
-                    path: to
-                }
-            }
-
-            return {};
-        });
-    }
-
-    return rules;
-}
+var Util = require('./lib/util');
 
 module.exports = {
     shouldUseLocalResponse: function (req, reqBody) {
-        var rules = getRules();
+        var rules = Util.getRules();
 
         if (rules.length == 0) {
             return false;
@@ -72,10 +26,6 @@ module.exports = {
         var urlPath = urlPattern.path;
         var origin = protocol + '://' + host;
         var url = origin + urlPath;
-
-        if (['.js', '.css'].indexOf(path.extname(url)) == -1) {
-            return false;
-        }
 
         req.url = url;
         urlPattern = URL.parse(url);
@@ -146,29 +96,68 @@ module.exports = {
         }
 
         req.localFiles = JSON.stringify(files);
-        log(color.green('forward to local files: [' + files.join(',') + ']'));
+        Util.log(color.green('forward to local files: [' + files.join(',') + ']'));
 
         return true;
     },
 
     dealLocalResponse: function (req, reqBody, callback) {
-        var files = JSON.parse(req.localFiles || '[]');
+        var headers = req.headers;
+        var files = JSON.parse(req.localFiles);
         var lastModified = '';
 
-        if (!files.length) {
-            return;
-        }
-
         Promise.all(files.map(function (url) {
-            return new Promise(function (res, rej) {
+            return new Promise(function (resolve, reject) {
                 if (/^http/.test(url)) {
-                    request(url, function (error, response, body) {
-                        if (!error && response.statusCode == 200) {
-                            res(body);
-                        } else {
-                            rej();
-                        }
+                    var uri = URL.parse(url);
+                    var isHTTPS = uri.protocol === 'https:';
+
+                    var options = {
+                        method: 'GET',
+                        port: isHTTPS ? '443' : 80,
+                        host: uri.host,
+                        path: uri.path,
+                        headers: headers
+                    };
+
+                    var request = (isHTTPS ? https : http).request(options, function (response) {
+                        var len = 0;
+                        var bufferData = [];
+
+                        response.on('data', function (chunk) {
+                            bufferData.push(chunk);
+                            len += chunk.length;
+                        });
+
+                        response.on('end', function () {
+                            var buffer = Buffer.concat(bufferData, len);
+
+                            if (response.statusCode == 200) {
+                                resolve(buffer.toString());
+                            } else {
+                                reject({
+                                    code: 404,
+                                    file: url
+                                });
+                            }
+                        });
+
+                        response.on('error', function () {
+                            reject({
+                                code: 404,
+                                file: url
+                            });
+                        });
                     });
+
+                    request.end();
+                    //request(url, function (error, response, body) {
+                    //    if (!error && response.statusCode == 200) {
+                    //        resolve(body);
+                    //    } else {
+                    //        reject();
+                    //    }
+                    //});
                 } else {
                     fs.stat(url, function (err, stat) {
                         if (+stat.mtime > +lastModified) {
@@ -182,36 +171,45 @@ module.exports = {
 
                         fs.readFile(url, function (err, buffer) {
                             if (err) {
-                                rej();
+                                reject({
+                                    code: 500,
+                                    stack: err.stack || err.toString()
+                                });
                                 return;
                             }
 
                             less.render(buffer.toString(), {
                                 paths: [dirname],
                                 filename: basename
-                            }, function (e, output) {
-                                if (!e) {
-                                    res(output.css);
+                            }, function (err, output) {
+                                if (!err) {
+                                    resolve(output.css);
                                 } else {
-                                    rej(e);
+                                    reject({
+                                        code: 500,
+                                        stack: err.stack || err.toString()
+                                    });
                                 }
                             });
                         });
                     } else {
                         fs.readFile(url, function (err, buffer) {
                             if (err) {
-                                rej();
+                                reject({
+                                    code: 500,
+                                    stack: err.stack || err.toString()
+                                });
                                 return;
                             }
 
-                            res(buffer);
+                            resolve(buffer);
                         });
                     }
                 }
             });
         })).then(function (results) {
             var contents = '';
-            var contentType = getType(files[0]);
+            var contentType = Util.getType(files[0]);
 
             results.forEach(function (item) {
                 if (Buffer.isBuffer(item)) {
@@ -231,46 +229,23 @@ module.exports = {
                 'Expires': 0,
                 'Cache-Control': 'no-cache, no-store, must-revalidate'
             }, contents);
-        }, function () {
-            callback(404, {
+        }, function (e) {
+            var errorMsg = '';
+
+            if (e.code == 404) {
+                errorMsg += '<h1>404 Not Found</h1>';
+                errorMsg += '<h2>File: ' + e.file + '</h2>';
+            } else {
+                errorMsg += '<h1>500 Internal Error</h1>';
+                errorMsg += '<h2>Stack: ' + e.stack + '</h2>';
+            }
+
+            callback(e.code, {
                 'Content-Type': 'text/html',
                 'Server': 'aproxy'
-            }, '<h1>404 Not Found</h1>');
+            }, errorMsg);
         });
     },
-
-    //replaceRequestProtocol: function (req, protocol) {
-    //    return 'http';
-    //},
-    //
-    //replaceRequestOption: function (req, option) {
-    //    return option;
-    //},
-    //
-    //replaceRequestData: function (req, data) {
-    //    return data;
-    //},
-    //
-    //replaceResponseStatusCode: function (req, res, statusCode) {
-    //    return statusCode;
-    //},
-    //
-    replaceResponseHeader: function (req, res, header) {
-        header = header || {};
-        header["Cache-Control"] = "no-cache, no-store, must-revalidate";
-        header["Pragma"] = "no-cache";
-        header["Expires"] = 0;
-
-        return header;
-    },
-    //
-    //replaceServerResDataAsync: function (req, res, serverResData, callback) {
-    //    callback(serverResData);
-    //},
-    //
-    //pauseBeforeSendingResponse: function (req, res) {
-    //    return 0;
-    //},
 
     shouldInterceptHttpsReq: function (req) {
         return true;
