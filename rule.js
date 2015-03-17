@@ -13,12 +13,6 @@ var Util = require('./lib/util');
 
 module.exports = {
     shouldUseLocalResponse: function (req, reqBody) {
-        var rules = Util.getRules();
-
-        if (rules.length == 0) {
-            return false;
-        }
-
         var host = req.headers.host;
         var protocol = (!!req.connection.encrypted && !/http:/.test(req.url)) ? "https" : "http";
 
@@ -26,6 +20,14 @@ module.exports = {
         var urlPath = urlPattern.path;
         var origin = protocol + '://' + host;
         var url = origin + urlPath;
+
+        Util.log(color.cyan('process url: ' + url));
+
+        var rules = Util.getRules();
+
+        if (rules.length == 0) {
+            return false;
+        }
 
         req.url = url;
         urlPattern = URL.parse(url);
