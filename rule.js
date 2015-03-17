@@ -227,7 +227,8 @@ module.exports = {
                 'Last-Modified': lastModified.toString(),
                 'Pragma': 'no-cache',
                 'Expires': 0,
-                'Cache-Control': 'no-cache, no-store, must-revalidate'
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'X-Combo-Files': '[' + files.join(',') + ']'
             }, contents);
         }, function (e) {
             var errorMsg = '';
@@ -237,7 +238,7 @@ module.exports = {
                 errorMsg += '<h2>File: ' + e.file + '</h2>';
             } else {
                 errorMsg += '<h1>500 Internal Error</h1>';
-                errorMsg += '<h2>Stack: ' + e.stack + '</h2>';
+                errorMsg += '<h2>' + e.stack + '</h2>';
             }
 
             callback(e.code, {
