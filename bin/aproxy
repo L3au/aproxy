@@ -1,0 +1,84 @@
+#!/usr/bin/env node
+
+var fs = require('fs');
+var path = require('path');
+var program = require('commander');
+var color = require('colorful');
+var express = require('express');
+var proxy = require("anyproxy");
+var rule = require('../lib/rule');
+var util = require('../lib/util');
+var packageInfo = require("../package.json");
+
+// commander options
+program
+    .version(packageInfo.version)
+    .description('A proxy for static resources')
+    .option('-p, --port [value]', 'proxy port, 9998 for default')
+    .option('-c, --config [value]', 'config page port, 9999 for default');
+
+program.on('--help', function () {
+    console.log('  Examples:');
+    console.log('');
+    console.log('    $ aproxy -p 9998');
+    console.log('    $ aproxy -p 80 -c 9999');
+    console.log('');
+});
+
+program.parse(process.argv);
+
+// generate rootCA file
+if (!proxy.isRootCAFileExists()) {
+    proxy.generateRootCA();
+
+    console.log(color.green('\n请双击rootCA.crt文件，安装并信任根证书，重启浏览器后重新启动aproxy。\n\n'));
+    return;
+}
+
+if (program.port || program.config) {
+    console.log(color.red('注意：修改默认端口后，Aproxy Config扩展会无法工作。。\n'));
+}
+
+var proxyPort = program.port || '9998';
+var configPort = program.config || '9999';
+
+// start proxy server
+var options = {
+    type: 'http',
+    port: proxyPort,
+    rule: rule,
+    disableWebInterface: true
+};
+
+new proxy.proxyServer(options);
+
+//  proxy config service
+var app = express();
+
+app.get('/', function (req, res) {
+    res.send('Aproxy Config Service');
+});
+
+app.route('/rule')
+    // get all proxy rules
+    .get(function (req, res) {
+        res.json(util.getProxyRules());
+    })
+    // save proxy rules
+    .post(function (req, res) {
+        util.saveProxyRules(req, function (err) {
+            res.json({success: !err});
+        });
+    });
+
+app.listen(configPort);
+
+var rulesPath = path.join(util.getHomePath(), '/.aproxy');
+
+if (!fs.existsSync(rulesPath)) {
+    try {
+        fs.mkdirSync(rulesPath, 0777);
+    } catch (e) {
+        console.log(color.red('创建规则目录失败!\n'));
+    }
+}

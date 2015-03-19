@@ -1,6 +1,6 @@
 {
   "name": "aproxy",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "A proxy for static resources",
   "keywords": [
     "proxy",
@@ -9,25 +9,25 @@
     "web"
   ],
   "bin": {
-    "aproxy": "proxy.js"
+    "aproxy": "bin/aproxy"
   },
   "dependencies": {
-    "anyproxy": "^3.2.3",
+    "anyproxy": "^3.2.4",
     "colorful": "~2.1.0",
-    "commander": "~2.7.1",
-    "express": "~4.10.1",
-    "less": "~2.4.0",
-    "merge": "~1.2.0",
-    "promise": "~6.0.1"
+    "commander": "~2.3.0",
+    "express": "~4.8.5",
+    "iconv-lite": "^0.4.6",
+    "ip": "^0.3.2",
+    "less": "~2.4.0"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/L3au/aproxy"
   },
-  "author": "uno",
+  "author": "L3au",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/licg9999/aproxy/issues"
+    "url": "https://github.com/L3au/aproxy/issues"
   },
-  "homepage": "https://github.com/licg9999/aproxy"
+  "homepage": "https://github.com/L3au/aproxy"
 }
