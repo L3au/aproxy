@@ -17,6 +17,10 @@ aproxy [-c number] [-p number]
 
 ### 更新记录
 
+> - v2.2.0
+     - fix https bug
+     - fix aproxy config
+
 > - v2.1.2
      - 更新说明，一些配置调整
 
