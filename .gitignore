@@ -1,3 +1,4 @@
-node_modules/
-.DS_Store
 .idea/
+*.swp
+.DS_Store
+node_modules/
