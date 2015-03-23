@@ -1,6 +1,6 @@
 {
   "name": "aproxy",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "A proxy for static resources",
   "keywords": [
     "proxy",
@@ -18,7 +18,8 @@
     "express": "~4.8.5",
     "iconv-lite": "^0.4.6",
     "ip": "^0.3.2",
-    "less": "~2.4.0"
+    "less": "~2.4.0",
+    "promise": "^6.1.0"
   },
   "repository": {
     "type": "git",
