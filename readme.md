@@ -13,7 +13,13 @@ aproxy [-c number] [-p number]
         -p: 代理端口, 默认9998
 ````
 
-启动后请安装Aproxy的Chrome扩展 或者访问 http://127.0.0.1:9999 进行配置
+启动后
+
+![](http://gtms03.alicdn.com/tps/i3/TB1_Z6GHFXXXXbXXXXXVqNfLXXX-1144-730.png_570x10000.jpg)
+
+请安装Aproxy的[Chrome扩展](https://chrome.google.com/webstore/detail/aproxy-config/njconeaigoafkdkcoaioddgmcioocabh)进行配置
+
+![](http://ww4.sinaimg.cn/large/621d64c1gw1erl3ujrwtaj20970hk75w.jpg)
 
 ### 更新记录
 
@@ -30,7 +36,6 @@ aproxy [-c number] [-p number]
      - 增加Aproxy Chrome扩展管理代理配置
 
 > - v2.0.0
-     - 全新改版，底层基于[Anyproxy](https://github.com/alibaba/anyproxy)，只做中间件
      - 去除定义域名，规则匹配只与用户配置规则有关，所以不需要指定域名对应IP
      - 增加css对应less文件预处理
 
